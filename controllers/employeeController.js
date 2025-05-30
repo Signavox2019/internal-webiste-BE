@@ -140,15 +140,28 @@ const getEmployeeCounts = async (req, res) => {
         }
       }
     ]);
+    const teamCounts = await Employee.aggregate([
+      {
+        $group: {
+          _id: '$team',
+          count: { $sum: 1 }
+        }
+      }
+    ]);
 
     const roleCountMap = {};
+    const teamCountMap = {};
     roleCounts.forEach((rc) => {
       roleCountMap[rc._id] = rc.count;
+    });
+    teamCounts.forEach((rc) => {
+      teamCountMap[rc._id] = rc.count;
     });
 
     res.json({
       total,
       roleWise: roleCountMap,
+      teamWise: teamCountMap,
     });
   } catch (err) {
     res.status(500).json({ message: err.message });

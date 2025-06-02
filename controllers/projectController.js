@@ -101,6 +101,7 @@ exports.createProject = async (req, res) => {
       assignedEmployees.push(teamLead);
     }
 
+
     const project = await Project.create({
       ...req.body,
       projectId,

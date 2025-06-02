@@ -11,14 +11,14 @@ const isValidSignavoxEmail = (email) => email.endsWith("@signavoxtechnologies.co
 
 exports.registerEmployee = async (req, res) => {
   try {
-    const { name, email, password, employeeId, role, team, bloodGroup, profileImage } = req.body;
+    const { name, email, password, employeeId, role, team, bloodGroup, profileImage, gender} = req.body;
 
     if (!isValidSignavoxEmail(email)) {
       return res.status(400).json({ message: "Only @signavoxtechnologies.com emails are allowed" });
     }
 
     const isAdmin = ['CEO', 'HR', 'CFO', 'CTO', 'COO', 'CMO'].includes(role);
-    const employee = await Employee.create({ name, email, password, employeeId, role, team, bloodGroup, profileImage, isAdmin });
+    const employee = await Employee.create({ name, email, password, employeeId, role, team, bloodGroup, profileImage, isAdmin, gender});
 
     res.status(201).json(employee);
   } catch (err) {

@@ -14,6 +14,8 @@ const {
   updateTicketStatus,
   getMyTickets, 
   getMyTicketStats,
+  getMonthlyTicketCounts,
+  getMonthlyStatusWiseCounts,
 } = require("../controllers/ticketController");
 
 
@@ -49,5 +51,10 @@ router.get("/my-tickets/:employeeId", getMyTickets);
 
 // Get ticket stats for logged-in (non-admin) employee
 router.get("/my-ticket-stats/:employeeId", getMyTicketStats);
+
+router.get('/counts/:year', getMonthlyTicketCounts);
+
+
+router.get('/status-counts/:year',   getMonthlyStatusWiseCounts);
 
 module.exports = router;

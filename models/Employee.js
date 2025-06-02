@@ -71,6 +71,11 @@ const employeeSchema = new mongoose.Schema({
   otp: String,
   otpExpiry: Date,
   isAdmin: { type: Boolean, default: false },
+  gender: {
+    type: String,
+    enum: ['Male', 'Female', 'Others'],
+    default: 'Other'
+  },
 
   // 🔽 myMobility fields
   isOnBench: { type: Boolean, default: true },

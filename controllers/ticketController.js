@@ -532,6 +532,133 @@ const getMyTicketStats = asyncHandler(async (req, res) => {
 });
 
 
+// Controller: Get Monthly Ticket Counts by Year
+const getMonthlyTicketCounts = asyncHandler(async (req, res) => {
+  const year = parseInt(req.params.year);
+  if (isNaN(year)) {
+    return res.status(400).json({ success: false, message: "Invalid year format" });
+  }
+
+  const startOfYear = new Date(`${year}-01-01T00:00:00Z`);
+  const endOfYear = new Date(`${year}-12-31T23:59:59Z`);
+
+  const monthlyCounts = await Ticket.aggregate([
+    {
+      $match: {
+        createdAt: {
+          $gte: startOfYear,
+          $lte: endOfYear,
+        },
+      },
+    },
+    {
+      $group: {
+        _id: { $month: "$createdAt" },
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        month: "$_id",
+        count: 1,
+      },
+    },
+    {
+      $sort: { month: 1 },
+    },
+  ]);
+
+  // Fill missing months with 0 count
+  const fullCounts = Array.from({ length: 12 }, (_, i) => {
+    const monthData = monthlyCounts.find((m) => m.month === i + 1);
+    return {
+      month: i + 1,
+      count: monthData ? monthData.count : 0,
+    };
+  });
+
+  res.json({ year, counts: fullCounts });
+});
+
+const getMonthlyStatusWiseCounts = asyncHandler(async (req, res) => {
+  const year = parseInt(req.params.year);
+  if (isNaN(year)) {
+    return res.status(400).json({ success: false, message: "Invalid year" });
+  }
+
+  const startOfYear = new Date(`${year}-01-01T00:00:00Z`);
+  const endOfYear = new Date(`${year}-12-31T23:59:59Z`);
+
+  const results = await Ticket.aggregate([
+    {
+      $match: {
+        createdAt: {
+          $gte: startOfYear,
+          $lte: endOfYear,
+        },
+      },
+    },
+    {
+      $project: {
+        month: { $month: "$createdAt" },
+        status: 1,
+      },
+    },
+    {
+      $group: {
+        _id: {
+          month: "$month",
+          status: "$status",
+        },
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $group: {
+        _id: "$_id.month",
+        statuses: {
+          $push: {
+            status: "$_id.status",
+            count: "$count",
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        month: "$_id",
+        statuses: 1,
+      },
+    },
+    {
+      $sort: { month: 1 },
+    },
+  ]);
+
+  // Define all possible statuses (ensure this matches your project)
+  const allStatuses = ['Open', 'Resolved', 'Breached'];
+
+  // Fill missing months and missing statuses with 0
+  const finalCounts = Array.from({ length: 12 }, (_, i) => {
+    const monthData = results.find((m) => m.month === i + 1);
+    const statusCounts = {};
+
+    allStatuses.forEach((status) => {
+      const found = monthData?.statuses.find((s) => s.status === status);
+      statusCounts[status] = found ? found.count : 0;
+    });
+
+    return {
+      month: i + 1,
+      ...statusCounts,
+    };
+  });
+
+  res.json({ year, data: finalCounts });
+});
+
 
 
 module.exports = {
@@ -546,4 +673,6 @@ module.exports = {
   updateTicketStatus,
   getMyTickets,
   getMyTicketStats,
+  getMonthlyTicketCounts,
+  getMonthlyStatusWiseCounts,
 };

@@ -8,10 +8,9 @@ const {
   deleteCard,
   getCardCountByCategory
 } = require('../controllers/cardController');
-const upload = require('../middleware/upload');
 
 // Create new card
-router.post('/', upload.single('image'), createCard);
+router.post('/', createCard);
 
 // Get all cards
 router.get('/', getCards);
@@ -20,7 +19,7 @@ router.get('/', getCards);
 router.get('/:id', getCardById);
 
 // Update card by ID
-router.put('/:id',  upload.single("image"), updateCard);
+router.put('/:id', updateCard);
 
 // Delete card by ID
 router.delete('/:id', deleteCard);

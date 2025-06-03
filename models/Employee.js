@@ -73,7 +73,7 @@ const employeeSchema = new mongoose.Schema({
   isAdmin: { type: Boolean, default: false },
   gender: {
     type: String,
-    enum: ['Male', 'Female', 'Others'],
+    enum: ['Male', 'Female', 'Other'],
     default: 'Other'
   },
 

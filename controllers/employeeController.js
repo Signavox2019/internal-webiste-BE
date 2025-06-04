@@ -32,6 +32,7 @@ const getProfile = asyncHandler(async (req, res) => {
     profileImage: employee.profileImage,
     status: employee.status,
     isAvailable: employee.isAvailable,
+    ...employee,
   });
 });
 

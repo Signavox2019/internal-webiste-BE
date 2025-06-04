@@ -5,6 +5,7 @@ const {
   // loginEmployee,
   logoutEmployee,
   getProfile,
+  getProfileById,
   updateProfile,
   getAllEmployees,    // Done
   getEmployeeById,
@@ -37,6 +38,7 @@ const { protect, adminOnly } = require('../middleware/auth');
 router.get('/support', protect, adminOnly, getSupportEmployees);
 // Employee profile
 router.get('/profile', protect, getProfile);
+router.get('/profile/:id', protect, getProfileById);
 router.get('/count', protect, authMiddleware, getEmployeeCounts);
 router.put('/profile/:id', protect, updateProfile);
 router.put('/profile-image', upload.single('image'), updateProfileImage);

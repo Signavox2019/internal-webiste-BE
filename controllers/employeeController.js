@@ -22,21 +22,33 @@ const getProfile = asyncHandler(async (req, res) => {
   const employee = req.employee;
 
   res.status(200).json({
-    _id: employee._id,
-    name: employee.name,
-    email: employee.email,
-    employeeId: employee.employeeId,
-    role: employee.role,
-    team: employee.team,
-    bloodGroup: employee.bloodGroup,
-    profileImage: employee.profileImage,
-    status: employee.status,
-    isAvailable: employee.isAvailable,
-    ...employee,
-  });
+    // _id: employee._id,
+    // name: employee.name,
+    // email: employee.email,
+    // employeeId: employee.employeeId,
+    // role: employee.role,
+    // team: employee.team,
+    // bloodGroup: employee.bloodGroup,
+    // profileImage: employee.profileImage,
+    // status: employee.status,
+    // isAvailable: employee.isAvailable,
+    // ...employee,
+    employee
+  }).populate('currentProject', 'title projectId');
 });
 
 
+const getProfileById = async (req, res) => {
+  try {
+    const employee = await Employee.findById(req.params.id).populate('currentProject', 'title projectId');
+    if (!employee) {
+      return res.status(404).json({ message: 'Employee not found' });
+    }
+    res.json(employee);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 
 
 // @desc    Update logged-in employee profile
@@ -95,7 +107,7 @@ const updateEmployeeProfessionalDetails = asyncHandler(async (req, res) => {
 // @route   GET /api/employees/:id
 const getEmployeeById = async (req, res) => {
   try {
-    const employee = await Employee.findById(req.params.id).populate('currentProject', 'title porjectId');
+    const employee = await Employee.findById(req.params.id).populate('currentProject', 'title projectId');
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found' });
     }
@@ -109,7 +121,7 @@ const getEmployeeById = async (req, res) => {
 // @route   GET /api/employees/
 const getAllEmployees = async (req, res) => {
   try {
-    const employees = await Employee.find().sort({ createdAt: -1 }).populate('currentProject', 'title porjectId');
+    const employees = await Employee.find().sort({ createdAt: -1 }).populate('currentProject', 'title projectId');
     res.json(employees);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -213,6 +225,7 @@ const getSupportEmployees = asyncHandler(async (req, res) => {
 module.exports = {
   updateProfile,
   getProfile,
+  getProfileById,
   getAllEmployees,
   getEmployeeById,
   deleteEmployee,

@@ -52,7 +52,7 @@ const employeeSchema = new mongoose.Schema({
   employeeId: { type: String, required: true, unique: true },
   role: {
     type: String,
-    enum: ['CEO', 'CTO', 'CFO', 'CMO', 'COO', 'CHRO', 'HR', 'Senior Manager', 'Manager', 'Developer', 'DevOps', 'BDE', 'Support', 'UI/UX', 'Testing', 'Other'],
+    enum: ['CEO', 'CTO', 'CFO', 'CMO', 'COO', 'CHRO', 'HR', 'Senior Manager', 'Manager', 'Developer', 'DevOps', 'BDE', 'Support', 'UI/UX', 'Testing', 'Technical Team lead', 'Operations Team lead', 'Marketing Team lead', 'Other'],
     default: 'Other'
   },
   team: {

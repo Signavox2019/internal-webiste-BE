@@ -2,7 +2,12 @@ const QuickLink = require('../models/QuickLink');
 
 exports.createQuickLink = async (req, res) => {
   try {
-    const { title, content, link } = req.body;
+    const { title, content, link } = req.body || {};
+
+    // Validate required fields
+    if (!title || !link) {
+      return res.status(400).json({ message: 'Title and link are required' });
+    }
 
     const quickLink = await QuickLink.create({
       title,
@@ -11,11 +16,16 @@ exports.createQuickLink = async (req, res) => {
       createdBy: req.employee._id,
     });
 
-    res.status(201).json(quickLink);
+    return res.status(201).json(quickLink); // ✅ return here
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    console.error('Error creating quick link:', err);
+    if (!res.headersSent) {
+      return res.status(400).json({ message: err.message }); // ✅ return here
+    }
+    // If headers already sent, you might log it or call next(err)
   }
 };
+
 
 exports.getAllQuickLinks = async (req, res) => {
   try {

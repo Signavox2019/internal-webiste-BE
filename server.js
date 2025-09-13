@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const path = require('path');
-const employeeRoutes = require('./routes/employeeRoutes'); 
+const employeeRoutes = require('./routes/employeeRoutes');
 const projectRoutes = require('./routes/projectRoutes');
 const projectApplicationRoutes = require('./routes/projectApplicationRoutes');
 const mobilityStatsRoutes = require('./routes/mobilityStatsRoutes');
@@ -37,9 +37,17 @@ app.use('/api/contact', contactRoutes);
 
 
 // Handle errors (optional)
+// Handle errors (optional)
 app.use((err, req, res, next) => {
+    console.error(err.stack); // log the error for debugging
+
+    if (res.headersSent) {
+        return next(err); // Pass it along if headers are already sent
+    }
+
     res.status(500).json({ message: err.message });
-  });
+});
+
 
 // Static files for uploads (if storing locally too)
 app.use('/uploads', express.static(path.join(__dirname, '/uploads')));

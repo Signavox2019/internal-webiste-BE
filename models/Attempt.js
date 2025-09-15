@@ -8,7 +8,7 @@ const AnswerSchema = new mongoose.Schema({
 
 const AttemptSchema = new mongoose.Schema({
   assignment: { type: mongoose.Schema.Types.ObjectId, ref: 'Assignment', required: true },
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'Employee', required: true },
+  employee: { type: mongoose.Schema.Types.ObjectId, ref: 'Employee', required: true },
   answers: [AnswerSchema],
   score: { type: Number, default: 0 },
   passed: { type: Boolean, default: false },

@@ -18,7 +18,7 @@ exports.createAssignment = async (req, res) => {
       cutoff,
       questions,
       assignedTo: employeeIds, // Assign to all employees
-      createdBy: req.Employee._id
+      createdBy: req.employee._id // ✅ use req.user instead of req.Employee
     });
 
     await assignment.save();
@@ -29,10 +29,11 @@ exports.createAssignment = async (req, res) => {
   }
 };
 
+
 // Get assignments created by executive
 exports.getAssignments = async (req, res) => {
   try {
-    const assignments = await Assignment.find({ createdBy: req.Employee._id });
+    const assignments = await Assignment.find({ createdBy: req.employee._id });
     res.status(200).json(assignments);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching assignments', error: error.message });
@@ -55,7 +56,7 @@ exports.submitAttempt = async (req, res) => {
   try {
     const { id } = req.params;
     const { answers } = req.body;
-    const EmployeeId = req.Employee._id;
+    const EmployeeId = req.employee._id;
 
     const assignment = await Assignment.findById(id);
     if (!assignment || !assignment.isActive) return res.status(404).json({ message: 'Assignment not available' });

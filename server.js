@@ -31,7 +31,7 @@ app.use('/api/tickets', require('./routes/ticketRoutes'));
 app.use('/api/projects', projectRoutes);
 app.use('/api/project-applications', projectApplicationRoutes);
 app.use('/api/mobility-stats', mobilityStatsRoutes);
-app.use('/api/announcements', require('./routes/assignmentRoutes'));
+app.use('/api/assignments', require('./routes/assignmentRoutes'));
 
 // contact
 app.use('/api/contact', contactRoutes);

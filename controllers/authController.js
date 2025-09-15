@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const Employee = require('../models/Employee');
+const Assignment = require('../models/Assignment');
 const transporter = require('../config/nodemailer');
 const generateOTP = require('../utils/generateOTP');
 const bcrypt = require('bcrypt');
@@ -11,14 +12,20 @@ const isValidSignavoxEmail = (email) => email.endsWith("@signavoxtechnologies.co
 
 exports.registerEmployee = async (req, res) => {
   try {
-    const { name, email, password, employeeId, role, team, bloodGroup, profileImage, gender} = req.body;
+    const { name, email, password, employeeId, role, team, bloodGroup, profileImage, gender } = req.body;
 
     if (!isValidSignavoxEmail(email)) {
       return res.status(400).json({ message: "Only @signavoxtechnologies.com emails are allowed" });
     }
 
     const isAdmin = ['CEO', 'HR', 'CFO', 'CTO', 'COO', 'CMO'].includes(role);
-    const employee = await Employee.create({ name, email, password, employeeId, role, team, bloodGroup, profileImage, isAdmin, gender});
+    const employee = await Employee.create({ name, email, password, employeeId, role, team, bloodGroup, profileImage, isAdmin, gender });
+
+    // Assign all active assignments to the new employee using bulk update
+    await Assignment.updateMany(
+      { isActive: true },
+      { $addToSet: { assignedTo: employee._id } }
+    );
 
     res.status(201).json(employee);
   } catch (err) {

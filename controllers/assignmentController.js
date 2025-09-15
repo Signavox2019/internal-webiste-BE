@@ -6,19 +6,24 @@ const Employee = require('../models/Employee');
 // Create Assignment (executive only)
 exports.createAssignment = async (req, res) => {
   try {
-    const { title, description, cutoff, deadline, questions, assignedTo } = req.body;
+    const { title, description, cutoff, questions } = req.body;
+
+    // Fetch all active employees
+    const employees = await Employee.find({ status: 'Active' });
+    const employeeIds = employees.map(emp => emp._id);
+
     const assignment = new Assignment({
       title,
       description,
       cutoff,
-      deadline,
       questions,
-      assignedTo,
+      assignedTo: employeeIds, // Assign to all employees
       createdBy: req.Employee._id
     });
 
     await assignment.save();
-    res.status(201).json({ message: 'Assignment created successfully', assignment });
+
+    res.status(201).json({ message: 'Assignment created and assigned to all employees', assignment });
   } catch (error) {
     res.status(500).json({ message: 'Error creating assignment', error: error.message });
   }

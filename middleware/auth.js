@@ -85,6 +85,7 @@ exports.auth = async (req, res, next) => {
 exports.protect = async (req, res, next) => {
   let token;
 
+  // Check for Bearer token in Authorization header
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith('Bearer')
@@ -97,18 +98,21 @@ exports.protect = async (req, res, next) => {
   }
 
   try {
+    // Verify the token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const employee = await Employee.findById(decoded.id).select('-password');
 
-    if (!employee) {
+    // Fetch the employee from database and exclude password field
+    const user = await Employee.findById(decoded.id).select('-password');
+
+    if (!user) {
       return res.status(401).json({ message: 'User not found' });
     }
 
-    req.employee = employee;
+    req.user = user; // ✅ Attach employee info to req.user
     next();
   } catch (err) {
     console.error('Token error:', err.message);
-    res.status(401).json({ message: 'Token verification failed' });
+    res.status(401).json({ message: 'Token verification failed', error: err.message });
   }
 };
 
@@ -156,7 +160,7 @@ exports.adminOnly = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await Employee.findById(decoded.id);
 
-    if (!user || (user.role !== 'HR' && user.role !== 'CEO' && user.role !== 'CTO' && user.role !== 'CFO' && user.role !== 'COO' && user.role !== 'CMO'))  {
+    if (!user || (user.role !== 'HR' && user.role !== 'CEO' && user.role !== 'CTO' && user.role !== 'CFO' && user.role !== 'COO' && user.role !== 'CMO')) {
       return res.status(403).json({ message: 'Admins only' });
     }
 

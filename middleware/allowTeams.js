@@ -1,7 +1,6 @@
-// middleware/allowTeams.js
 module.exports = function allowTeams(teams = []) {
   return (req, res, next) => {
-    const employeeTeam = req.employee.team;
+    const employeeTeam = req.user.team; // ✅ use req.user instead of req.employee
     if (teams.includes(employeeTeam)) {
       return next();
     }

@@ -14,13 +14,13 @@ router.get('/:id/report',  protect, allowTeams(['Executive', 'Operations']), ass
 // User routes
 router.get('/available', protect, async (req, res) => {
   const assignments = await require('../models/Assignment').find({
-    assignedTo: req.user._id,
+    assignedTo: req.employee._id,
     isActive: true
   });
   res.json(assignments);
 });
-router.post('/:id/attempt', protect, allowTeams(['Executive', 'Operations']), assignmentController.submitAttempt);
-router.get('/:id/status', protect, allowTeams(['Executive', 'Operations']), assignmentController.getAttemptHistory);
+router.post('/:id/attempt', protect, assignmentController.submitAttempt);
+router.get('/:id/status', protect, assignmentController.getAttemptHistory);
 
 // Admin routes
 router.get('/:id/attempts', protect, allowTeams(['Executive', 'Operations']), assignmentController.getAllAttempts);

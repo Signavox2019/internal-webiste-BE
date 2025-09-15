@@ -1,7 +1,7 @@
 // controllers/assignmentController.js
 const Assignment = require('../models/Assignment');
 const Attempt = require('../models/Attempt');
-const User = require('../models/User');
+const Employee = require('../models/Employee');
 
 // Create Assignment (executive only)
 exports.createAssignment = async (req, res) => {
@@ -14,7 +14,7 @@ exports.createAssignment = async (req, res) => {
       deadline,
       questions,
       assignedTo,
-      createdBy: req.user._id
+      createdBy: req.Employee._id
     });
 
     await assignment.save();
@@ -27,7 +27,7 @@ exports.createAssignment = async (req, res) => {
 // Get assignments created by executive
 exports.getAssignments = async (req, res) => {
   try {
-    const assignments = await Assignment.find({ createdBy: req.user._id });
+    const assignments = await Assignment.find({ createdBy: req.Employee._id });
     res.status(200).json(assignments);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching assignments', error: error.message });
@@ -50,7 +50,7 @@ exports.submitAttempt = async (req, res) => {
   try {
     const { id } = req.params;
     const { answers } = req.body;
-    const userId = req.user._id;
+    const EmployeeId = req.Employee._id;
 
     const assignment = await Assignment.findById(id);
     if (!assignment || !assignment.isActive) return res.status(404).json({ message: 'Assignment not available' });
@@ -61,7 +61,7 @@ exports.submitAttempt = async (req, res) => {
     }
 
     // Get previous attempts to count attempt number
-    const previousAttempts = await Attempt.find({ assignment: id, user: userId });
+    const previousAttempts = await Attempt.find({ assignment: id, Employee: EmployeeId });
     const attemptNumber = previousAttempts.length + 1;
 
     // Evaluate score
@@ -85,7 +85,7 @@ exports.submitAttempt = async (req, res) => {
 
     const attempt = new Attempt({
       assignment: id,
-      user: userId,
+      Employee: EmployeeId,
       answers,
       score,
       passed,
@@ -105,23 +105,23 @@ exports.submitAttempt = async (req, res) => {
   }
 };
 
-// Get attempt history for a user
+// Get attempt history for a Employee
 exports.getAttemptHistory = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user._id;
-    const attempts = await Attempt.find({ assignment: id, user: userId }).sort({ attemptNumber: 1 });
+    const EmployeeId = req.Employee._id;
+    const attempts = await Attempt.find({ assignment: id, Employee: EmployeeId }).sort({ attemptNumber: 1 });
     res.status(200).json(attempts);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching attempts', error: error.message });
   }
 };
 
-// Admin or executive can view attempts by all users
+// Admin or executive can view attempts by all Employees
 exports.getAllAttempts = async (req, res) => {
   try {
     const { id } = req.params;
-    const attempts = await Attempt.find({ assignment: id }).populate('user', 'name email');
+    const attempts = await Attempt.find({ assignment: id }).populate('Employee', 'name email');
     res.status(200).json(attempts);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching attempts', error: error.message });

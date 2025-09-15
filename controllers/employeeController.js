@@ -19,22 +19,9 @@ const isValidEmailDomain = (email) => {
 
 
 const getProfile = asyncHandler(async (req, res) => {
-  const employee = req.employee;
+  const employee = req.employee.populate('currentProject', 'title projectId');
 
-  res.status(200).json({
-    // _id: employee._id,
-    // name: employee.name,
-    // email: employee.email,
-    // employeeId: employee.employeeId,
-    // role: employee.role,
-    // team: employee.team,
-    // bloodGroup: employee.bloodGroup,
-    // profileImage: employee.profileImage,
-    // status: employee.status,
-    // isAvailable: employee.isAvailable,
-    // ...employee,
-    employee
-  }).populate('currentProject', 'title projectId');
+  res.status(200).json(employee);
 });
 
 

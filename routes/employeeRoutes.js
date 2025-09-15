@@ -45,7 +45,8 @@ router.put('/profile-image', upload.single('image'), updateProfileImage);
 
 // Admin: Manage all employees
 // router.get('/support', protect, adminOnly, getSupportEmployees);
-router.get('/', protect, adminOnly, getAllEmployees);
+// router.get('/', protect, adminOnly, getAllEmployees);
+router.get('/', protect, getAllEmployees);
 router.get('/:id', protect, adminOnly, getEmployeeById);
 router.delete('/:id', protect, adminOnly, deleteEmployee);
 

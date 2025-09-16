@@ -195,7 +195,7 @@ exports.deleteAssignment = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to delete this assignment' });
     }
 
-    await assignment.remove();
+    await assignment.deleteOne();
 
     res.status(200).json({ message: 'Assignment deleted' });
   } catch (error) {

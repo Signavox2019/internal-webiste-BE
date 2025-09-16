@@ -14,13 +14,13 @@ router.delete('/:id', protect, allowTeams(['Executive', 'Operations']), assignme
 router.get('/:id/report', protect, allowTeams(['Executive', 'Operations']), assignmentController.getAllAttempts);
 
 // User routes
-router.get('/available', protect, async (req, res) => {
-  const assignments = await require('../models/Assignment').find({
-    assignedTo: req.user._id, // ✅ use req.user instead of req.employee
-    isActive: true
-  });
-  res.json(assignments);
-});
+// router.get('/available', protect, async (req, res) => {
+//   const assignments = await require('../models/Assignment').find({
+//     assignedTo: req.user._id, // ✅ use req.user instead of req.employee
+//     isActive: true
+//   });
+//   res.json(assignments);
+// });
 router.post('/:id/attempt', protect, assignmentController.submitAttempt);
 router.get('/:id/status', protect, assignmentController.getAttemptHistory);
 

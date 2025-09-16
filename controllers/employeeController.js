@@ -19,10 +19,15 @@ const isValidEmailDomain = (email) => {
 
 
 const getProfile = asyncHandler(async (req, res) => {
-  const employee = req.employee.populate('currentProject', 'title projectId');
+  if (!req.employee) {
+    return res.status(404).json({ message: 'Employee not found' });
+  }
 
+  const employee = await req.employee.populate('currentProject', 'title projectId');
+  
   res.status(200).json(employee);
 });
+
 
 
 const getProfileById = async (req, res) => {

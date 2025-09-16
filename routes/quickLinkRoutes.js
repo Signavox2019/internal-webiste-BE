@@ -20,6 +20,6 @@ router.get('/', protect, getAllQuickLinks);
 router.get('/count', protect, allowTeams(['Executive', 'Operations']), getQuickLinkCount); // 🔹 New route for count
 router.get('/:id', protect, getQuickLinkById);
 router.put('/:id', protect, allowTeams(['Executive', 'Operations']), updateQuickLink);
-router.delete('/:id', allowTeams(['Executive', 'Operations']), protect, deleteQuickLink);
+router.delete('/:id',  protect, allowTeams(['Executive', 'Operations']), deleteQuickLink);
 
 module.exports = router;

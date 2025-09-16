@@ -34,12 +34,13 @@ exports.createAssignment = async (req, res) => {
 // Get assignments created by executive
 exports.getAssignments = async (req, res) => {
   try {
-    const assignments = await Assignment.find({ createdBy: req.user._id });
+    const assignments = await Assignment.find(); // Fetch all assignments
     res.status(200).json(assignments);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching assignments', error: error.message });
   }
 };
+
 
 // Get assignment details
 exports.getAssignment = async (req, res) => {

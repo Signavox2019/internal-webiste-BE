@@ -1,25 +1,39 @@
+const AWS = require('aws-sdk');
 const multer = require('multer');
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
-const cloudinary = require('cloudinary').v2;
+const multerS3 = require('multer-s3');
 
-// Configure Cloudinary credentials
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+// Configure AWS with environment variables
+AWS.config.update({
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,          // ✅ from .env
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,  // ✅ from .env
+  region: process.env.AWS_REGION                       // ✅ from .env
 });
 
-// Set up Cloudinary storage engine
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: 'signavox_uploads', // optional: folder name in Cloudinary
-    allowed_formats: ['jpg', 'jpeg', 'png'],
-    public_id: (req, file) => `${Date.now()}-${file.originalname}`, // Optional custom naming
-  },
-});
+// Create S3 instance
+const s3 = new AWS.S3();
 
-// Create multer instance with Cloudinary storage
-const upload = multer({ storage });
+// Configure multer to use S3
+const upload = multer({
+  storage: multerS3({
+    s3: s3,
+    bucket: process.env.S3_BUCKET_NAME,  // ✅ bucket name from .env
+    acl: 'public-read',                  // ✅ files are public by default
+    metadata: (req, file, cb) => {
+      cb(null, { fieldName: file.fieldname });
+    },
+    key: (req, file, cb) => {
+      const fileName = `${Date.now()}-${file.originalname}`;
+      cb(null, fileName); // ✅ generate unique file names
+    }
+  }),
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only JPG, JPEG, and PNG are allowed.'));
+    }
+  }
+});
 
 module.exports = upload;

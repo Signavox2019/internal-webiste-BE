@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 
 const QuestionSchema = new mongoose.Schema({
   text: { type: String, required: true },
-  type: { type: String, enum: ['MCQ', 'Blank', 'TrueFalse', 'ShortAnswer'], required: true },
+  type: { type: String, enum: ['MCQ', 'Blank', 'TrueFalse', 'ShortAnswer', 'MAQ'], required: true },
   options: [{ type: String }], // For MCQ or TrueFalse types
   correctAnswer: { type: mongoose.Mixed, required: true }, // Could be string, array, etc.
   marks: { type: Number, default: 1 },

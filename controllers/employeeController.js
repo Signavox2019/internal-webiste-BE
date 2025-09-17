@@ -2,7 +2,8 @@ const Employee = require('../models/Employee');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const sendMail = require('../utils/sendMail');
-
+const s3Client = require('../config/s3'); // AWS S3 client
+const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const asyncHandler = require('express-async-handler');
 
 // OTP store (in-memory, for production use Redis or DB)
@@ -184,7 +185,7 @@ const updateProfileImage = asyncHandler(async (req, res) => {
   const { _id } = req.body;
   const file = req.file;
 
-  if (!file) {
+  if (!file || !file.location || !file.key) {
     return res.status(400).json({ message: 'No image file uploaded' });
   }
 
@@ -193,20 +194,28 @@ const updateProfileImage = asyncHandler(async (req, res) => {
     return res.status(404).json({ message: 'Employee not found' });
   }
 
-  // Upload to Cloudinary
-  const cloudinary = require('../utils/cloudinary'); // adjust if your path is different
-  const result = await cloudinary.uploader.upload(file.path, {
-    folder: 'signavox/employees', // optional folder in Cloudinary
-    resource_type: 'image',
-  });
+  // Delete old profile image from S3 if exists
+  if (employee.profileImageKey) {
+    try {
+      await s3Client.send(new DeleteObjectCommand({
+        Bucket: process.env.AWS_BUCKET_NAME,
+        Key: employee.profileImageKey,
+      }));
+    } catch (err) {
+      console.error('Error deleting old profile image from S3:', err);
+    }
+  }
 
-  // Update profileImage field
-  employee.profileImage = result.secure_url;
+  // Update employee profile image with S3 URL
+  employee.profileImage = file.location;
+  employee.profileImageKey = file.key; // store S3 key for future deletion
   await employee.save();
 
-  res.status(200).json({ message: 'Profile image updated successfully', profileImage: result.secure_url });
+  res.status(200).json({
+    message: 'Profile image updated successfully',
+    profileImage: file.location,
+  });
 });
-
 // @desc    Get all employees with 'Support' role
 // @route   GET /api/employees/support
 const getSupportEmployees = asyncHandler(async (req, res) => {

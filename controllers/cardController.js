@@ -3,6 +3,8 @@ const multer = require('multer');
 const path = require('path');
 const Card = require('../models/Card');
 const upload = require('../middleware/upload');
+const s3Client = require('../config/s3');
+const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
 
 // // const { upload } = require('../middleware/upload');
 // const { upload } = require('');
@@ -84,7 +86,7 @@ const upload = require('../middleware/upload');
 
 exports.createCard = async (req, res) => {
   try {
-    if (!req.file || !req.file.path || !req.file.filename) {
+    if (!req.file || !req.file.location) {
       return res.status(400).json({ message: 'Image upload failed or no image provided' });
     }
 
@@ -102,8 +104,8 @@ exports.createCard = async (req, res) => {
     const newCard = new Card({
       title: req.body.title,
       description: filteredDescription,
-      image: req.file.path, // secure_url returned by multer-cloudinary
-      imagePublicId: req.file.filename, // public_id used when deleting
+      image: req.file.location, // URL returned by S3
+      imagePublicId: req.file.key, // key used when deleting file from S3
       type: req.body.type,
       createdBy: req.user?.id,
     });
@@ -114,6 +116,7 @@ exports.createCard = async (req, res) => {
     res.status(500).json({ message: 'Error saving card to database', error });
   }
 };
+
 
 // Get All Cards
 exports.getCards = (req, res) => {
@@ -168,8 +171,8 @@ exports.getCardById = (req, res) => {
 //   }
 // };
 
+// Update Card
 exports.updateCard = async (req, res) => {
-
   try {
     const card = await Card.findById(req.params.id);
     if (!card) return res.status(404).json({ message: 'Card not found' });
@@ -189,48 +192,53 @@ exports.updateCard = async (req, res) => {
     }
 
     // Handle image update
-    if (req.file && req.file.path) {
-      // Delete old image from Cloudinary if exists
+    if (req.file && req.file.location) {
+      // Delete old image from S3 if exists
       if (card.imagePublicId) {
-        await cloudinary.uploader.destroy(card.imagePublicId);
+        try {
+          await s3Client.send(new DeleteObjectCommand({
+            Bucket: process.env.AWS_BUCKET_NAME,
+            Key: card.imagePublicId,
+          }));
+        } catch (err) {
+          console.error('Error deleting old image from S3:', err);
+        }
       }
 
-      // Upload new image to Cloudinary
-      const uploadResult = await cloudinary.uploader.upload(req.file.path, {
-        folder: 'cards',
-      });
-
-      updatedData.image = uploadResult.secure_url;
-      updatedData.imagePublicId = uploadResult.public_id;
+      // Update with new image info
+      updatedData.image = req.file.location;     // S3 URL
+      updatedData.imagePublicId = req.file.key;  // S3 key for deletion
     }
 
-    const updatedCard = await Card.findByIdAndUpdate(req.params.id, updatedData, {
-      new: true,
-    });
-
+    const updatedCard = await Card.findByIdAndUpdate(req.params.id, updatedData, { new: true });
     res.status(200).json({ message: 'Card updated successfully', card: updatedCard });
   } catch (error) {
     res.status(500).json({ message: 'Error updating card', error });
   }
 };
 
-
-
 // Delete Card
-exports.deleteCard = (req, res) => {
-  Card.findByIdAndDelete(req.params.id)
-    .then((card) => {
-      if (!card) return res.status(404).json({ message: 'Card not found' });
+exports.deleteCard = async (req, res) => {
+  try {
+    const card = await Card.findByIdAndDelete(req.params.id);
+    if (!card) return res.status(404).json({ message: 'Card not found' });
 
-      if (card.imagePublicId) {
-        cloudinary.uploader.destroy(card.imagePublicId, (err) => {
-          if (err) return res.status(500).json({ message: 'Error deleting image from Cloudinary', error: err });
-        });
+    // Delete image from S3 if exists
+    if (card.imagePublicId) {
+      try {
+        await s3Client.send(new DeleteObjectCommand({
+          Bucket: process.env.AWS_BUCKET_NAME,
+          Key: card.imagePublicId,
+        }));
+      } catch (err) {
+        console.error('Error deleting image from S3:', err);
       }
+    }
 
-      res.status(200).json({ message: 'Card deleted successfully' });
-    })
-    .catch((error) => res.status(500).json({ message: 'Error deleting card', error }));
+    res.status(200).json({ message: 'Card deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting card', error });
+  }
 };
 
 // Count Cards by Category

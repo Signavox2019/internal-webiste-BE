@@ -4,8 +4,9 @@ const asyncHandler = require("express-async-handler");
 const { sendMail } = require("../utils/sendMail");
 const path = require("path");
 const fs = require("fs");
-const cloudinary = require("../utils/cloudinary")
 const moment = require("moment");
+const s3Client = require('../config/s3'); // AWS S3 v3 client
+const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
 
 
 // const multer = require("multer");
@@ -233,13 +234,12 @@ const createTicket = async (req, res) => {
       return res.status(400).json({ success: false, message: "Title, description, and createdBy are required" });
     }
 
-    // Upload image to Cloudinary if available
+    // Upload image to S3 if available
     let imageUrl = null;
-    if (req.file) {
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: "signavox-tickets",
-      });
-      imageUrl = result.secure_url;
+    let imageKey = null;
+    if (req.file && req.file.location && req.file.key) {
+      imageUrl = req.file.location; // Full S3 URL
+      imageKey = req.file.key;      // Key in S3 for deletion if needed
     }
 
     // Get support team members
@@ -269,6 +269,7 @@ const createTicket = async (req, res) => {
       title,
       description,
       image: imageUrl,
+      imageKey: imageKey,      // Save S3 key for future deletion
       createdBy,
       assignedTo: assignedEmployee._id,
       ticketNumber,
@@ -286,7 +287,7 @@ const createTicket = async (req, res) => {
 
   } catch (error) {
     console.error("Error creating ticket:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(500).json({ success: false, message: "Server error", error });
   }
 };
 
@@ -343,6 +344,7 @@ const getTicketById = asyncHandler(async (req, res) => {
 //   res.json(ticket);
 // });
 
+// Update Ticket
 const updateTicket = asyncHandler(async (req, res) => {
   const { title, description, status } = req.body;
 
@@ -357,25 +359,28 @@ const updateTicket = asyncHandler(async (req, res) => {
   if (status) ticket.status = status;
 
   // Handle image update
-  if (req.file) {
+  if (req.file && req.file.location && req.file.key) {
     try {
-      // Upload new image to Cloudinary
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: "tickets",
-      });
+      // Delete old image from S3 if exists
+      if (ticket.imageKey) {
+        await s3Client.send(new DeleteObjectCommand({
+          Bucket: process.env.AWS_BUCKET_NAME,
+          Key: ticket.imageKey,
+        }));
+      }
 
-      // Update ticket with Cloudinary image URL
-      ticket.image = result.secure_url;
+      // Update ticket with new S3 image
+      ticket.image = req.file.location;
+      ticket.imageKey = req.file.key;
     } catch (error) {
       res.status(500);
-      throw new Error("Cloudinary upload failed");
+      throw new Error("S3 upload or deletion failed");
     }
   }
 
   await ticket.save();
   res.json(ticket);
 });
-
 
 // Delete Ticket
 const deleteTicket = asyncHandler(async (req, res) => {
@@ -385,11 +390,15 @@ const deleteTicket = asyncHandler(async (req, res) => {
     throw new Error("Ticket not found");
   }
 
-  // Delete associated image if it exists
-  if (ticket.image) {
-    const imagePath = path.join(__dirname, `../uploads/${ticket.image}`);
-    if (fs.existsSync(imagePath)) {
-      fs.unlinkSync(imagePath);
+  // Delete associated image from S3 if it exists
+  if (ticket.imageKey) {
+    try {
+      await s3Client.send(new DeleteObjectCommand({
+        Bucket: process.env.AWS_BUCKET_NAME,
+        Key: ticket.imageKey,
+      }));
+    } catch (err) {
+      console.error("Error deleting image from S3:", err);
     }
   }
 

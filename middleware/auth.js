@@ -85,34 +85,43 @@ exports.auth = async (req, res, next) => {
 exports.protect = async (req, res, next) => {
   let token;
 
-  // Check for Bearer token in Authorization header
+  // 1. Check if the Authorization header exists and starts with 'Bearer'
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith('Bearer')
   ) {
+    // Extract token from "Bearer <token>"
     token = req.headers.authorization.split(' ')[1];
   }
 
+  // 2. If token is missing, block access
   if (!token) {
     return res.status(401).json({ message: 'Not authorized, token missing' });
   }
 
   try {
-    // Verify the token
+    // 3. Verify token and decode payload
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Fetch the employee from database and exclude password field
+    // 4. Find employee by ID and exclude password from result
     const user = await Employee.findById(decoded.id).select('-password');
 
+    // 5. If employee doesn't exist, block access
     if (!user) {
       return res.status(401).json({ message: 'User not found' });
     }
 
-    req.user = user; // ✅ Attach employee info to req.user
+    // 6. Attach employee data to request object for downstream use
+    req.user = user;
+
+    // 7. Proceed to next middleware or controller
     next();
   } catch (err) {
-    console.error('Token error:', err.message);
-    res.status(401).json({ message: 'Token verification failed', error: err.message });
+    console.error('Token error:', err.message); // ✅ Log token errors for debugging
+    res.status(401).json({
+      message: 'Token verification failed',
+      error: err.message
+    });
   }
 };
 

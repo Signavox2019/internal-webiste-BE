@@ -203,3 +203,46 @@ exports.deleteAssignment = async (req, res) => {
     res.status(500).json({ message: 'Error deleting assignment', error: error.message });
   }
 };
+
+
+exports.getMyAssignmentReport = async (req, res) => {
+  try {
+    const employeeId = req.user._id; // Use employee ID from token
+
+    // Fetch all assignments assigned to this employee
+    const assignments = await Assignment.find({ assignedTo: employeeId }).lean();
+
+    // For each assignment, fetch their attempts
+    const report = await Promise.all(assignments.map(async assignment => {
+      const attempts = await Attempt.find({
+        assignment: assignment._id,
+        employee: employeeId
+      }).sort({ attemptNumber: 1 }).lean();
+
+      return {
+        assignmentId: assignment._id,
+        title: assignment.title,
+        description: assignment.description,
+        cutoff: assignment.cutoff,
+        isActive: assignment.isActive,
+        deadline: assignment.deadline,
+        attempts: attempts.map(attempt => ({
+          attemptNumber: attempt.attemptNumber,
+          score: attempt.score,
+          passed: attempt.passed,
+          submittedAt: attempt.createdAt
+        }))
+      };
+    }));
+
+    res.status(200).json({
+      employeeId,
+      report
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error fetching assignment report',
+      error: error.message
+    });
+  }
+};

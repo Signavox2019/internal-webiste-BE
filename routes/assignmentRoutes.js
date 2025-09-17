@@ -4,6 +4,7 @@ const assignmentController = require('../controllers/assignmentController');
 const allowTeams = require('../middleware/allowTeams');
 const { protect } = require('../middleware/auth');
 
+router.get('/my-report', protect, assignmentController.getMyAssignmentReport);
 // Executive & Operations routes
 router.post('/', protect, allowTeams(['Executive', 'Operations']), assignmentController.createAssignment);
 router.get('/', protect, assignmentController.getAssignments);

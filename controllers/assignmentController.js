@@ -1,6 +1,7 @@
 const Assignment = require('../models/Assignment');
 const Attempt = require('../models/Attempt');
 const Employee = require('../models/Employee');
+const Submission = require('../models/Submission');
 
 // Create Assignment (executive only)
 exports.createAssignment = async (req, res) => {
@@ -246,3 +247,48 @@ exports.getMyAssignmentReport = async (req, res) => {
     });
   }
 };
+
+
+exports.getAssignmentStatus = async (req, res) => {
+  try {
+    const employeeId = req.user._id.toString();
+
+    // Get all active assignments for this employee
+    const activeAssignments = await Assignment.find({
+      assignedTo: employeeId,
+      isActive: true
+    }).lean();
+
+    // Get all attempts where the employee has passed
+    const passedAttempts = await Attempt.find({
+      employee: employeeId,
+      passed: true
+    }).populate('assignment');
+
+    // Extract the completed assignments
+    const completedAssignments = passedAttempts
+      .map(a => a.assignment)
+      .filter(a => a); // remove nulls
+
+    // Collect completed assignment IDs
+    const completedAssignmentIds = new Set(
+      completedAssignments.map(a => a._id.toString())
+    );
+
+    // Remaining = active - completed
+    const remainingAssignments = activeAssignments.filter(
+      a => !completedAssignmentIds.has(a._id.toString())
+    );
+
+    res.status(200).json({
+      success: true,
+      completedAssignments,
+      remainingAssignments
+    });
+  } catch (error) {
+    console.error("Error fetching assignment status:", error);
+    res.status(500).json({ success: false, message: "Server error", error });
+  }
+};
+
+

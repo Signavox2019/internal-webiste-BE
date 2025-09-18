@@ -9,7 +9,7 @@ router.get('/my-report', protect, assignmentController.getMyAssignmentReport);
 router.post('/', protect, allowTeams(['Executive', 'Operations']), assignmentController.createAssignment);
 router.get('/', protect, assignmentController.getAssignments);
 router.get('/count', protect, assignmentController.getAssignmentCount);
-router.get('/status', protect, assignmentController.getAssignmentStatus);
+router.get('/status/:employeeId', protect, allowTeams(['Executive', 'Operations']), assignmentController.getAssignmentStatus);
 router.get('/:id', protect, assignmentController.getAssignment);
 router.put('/:id', protect, allowTeams(['Executive', 'Operations']), assignmentController.editAssignment);
 router.delete('/:id', protect, allowTeams(['Executive', 'Operations']), assignmentController.deleteAssignment);

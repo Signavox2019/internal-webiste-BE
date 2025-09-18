@@ -251,7 +251,12 @@ exports.getMyAssignmentReport = async (req, res) => {
 
 exports.getAssignmentStatus = async (req, res) => {
   try {
-    const employeeId = req.user._id.toString();
+    // Get employeeId from params instead of token
+    const employeeId = req.params.employeeId;
+
+    if (!employeeId) {
+      return res.status(400).json({ success: false, message: "Employee ID is required" });
+    }
 
     // Get all active assignments for this employee
     const activeAssignments = await Assignment.find({
@@ -282,6 +287,7 @@ exports.getAssignmentStatus = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      employeeId,
       completedAssignments,
       remainingAssignments
     });

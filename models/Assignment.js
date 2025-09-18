@@ -14,10 +14,21 @@ const AssignmentSchema = new mongoose.Schema({
   description: { type: String },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Employee', required: true }, // Executive team member
   cutoff: { type: Number, required: true },
-//   deadline: { type: Date, required: true },
+  //   deadline: { type: Date, required: true },
   questions: [QuestionSchema],
   assignedTo: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Employee' }], // Users assigned to the assignment
-  isActive: { type: Boolean, default: true }
+  isActive: { type: Boolean, default: true },
+  totalMarks: { type: Number, default: 0 } // ✅ New field
 }, { timestamps: true });
+
+// Pre-save middleware to calculate totalMarks
+AssignmentSchema.pre('save', function (next) {
+  if (this.questions && this.questions.length > 0) {
+    this.totalMarks = this.questions.reduce((sum, q) => sum + (q.marks || 0), 0);
+  } else {
+    this.totalMarks = 0;
+  }
+  next();
+});
 
 module.exports = mongoose.model('Assignment', AssignmentSchema);

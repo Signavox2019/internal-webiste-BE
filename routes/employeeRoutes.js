@@ -41,7 +41,7 @@ router.get('/profile', protect, getProfile);
 router.get('/profile/:id', protect, getProfileById);
 router.get('/count', protect, authMiddleware, getEmployeeCounts);
 router.put('/profile/:id', protect, updateProfile);
-router.put('/profile-image', upload.single('image'), updateProfileImage);
+router.put('/profile-image', protect, upload.single('image'), updateProfileImage);
 
 // Admin: Manage all employees
 // router.get('/support', protect, adminOnly, getSupportEmployees);

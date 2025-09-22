@@ -182,14 +182,14 @@ const getEmployeeCounts = async (req, res) => {
 // @desc    Update employee profile image (with Multer + Cloudinary)
 // @route   PUT /api/employees/profile-image
 const updateProfileImage = asyncHandler(async (req, res) => {
-  const { _id } = req.body;
+  const userId = req.user._id; // ✅ take user id from token
   const file = req.file;
 
   if (!file || !file.location || !file.key) {
     return res.status(400).json({ message: 'No image file uploaded' });
   }
 
-  const employee = await Employee.findById(_id);
+  const employee = await Employee.findById(userId);
   if (!employee) {
     return res.status(404).json({ message: 'Employee not found' });
   }
@@ -206,9 +206,9 @@ const updateProfileImage = asyncHandler(async (req, res) => {
     }
   }
 
-  // Update employee profile image with S3 URL
+  // Update employee profile image with S3 URL + Key
   employee.profileImage = file.location;
-  employee.profileImageKey = file.key; // store S3 key for future deletion
+  employee.profileImageKey = file.key;
   await employee.save();
 
   res.status(200).json({
@@ -216,6 +216,7 @@ const updateProfileImage = asyncHandler(async (req, res) => {
     profileImage: file.location,
   });
 });
+
 // @desc    Get all employees with 'Support' role
 // @route   GET /api/employees/support
 const getSupportEmployees = asyncHandler(async (req, res) => {

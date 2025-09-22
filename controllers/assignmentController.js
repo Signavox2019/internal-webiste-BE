@@ -62,37 +62,63 @@ exports.submitAttempt = async (req, res) => {
     const { id } = req.params;
     const { answers } = req.body;
     const employeeId = req.user._id;
-
+ 
     const assignment = await Assignment.findById(id);
     if (!assignment || !assignment.isActive) {
       return res.status(404).json({ message: 'Assignment not available' });
     }
-
+ 
     if (assignment.deadline && new Date() > new Date(assignment.deadline)) {
       return res.status(400).json({ message: 'Deadline has passed' });
     }
-
+ 
     const previousAttempts = await Attempt.find({ assignment: id, employee: employeeId });
     const attemptNumber = previousAttempts.length + 1;
-
+ 
     let score = 0;
+ 
     for (let q of assignment.questions) {
-      const answerObj = answers.find(a => a.questionId === q._id.toString());
-      if (answerObj) {
-        let isCorrect = false;
-        if (q.type === 'MCQ' || q.type === 'TrueFalse') {
+      // ✅ FIX: convert both sides to string before comparing
+      const answerObj = answers.find(a => a.questionId.toString() === q._id.toString());
+      if (!answerObj) continue;
+ 
+      let isCorrect = false;
+ 
+      switch (q.type) {
+        case "MCQ":
+        case "TrueFalse":
           isCorrect = q.correctAnswer === answerObj.answer;
-        } else if (q.type === 'Blank' || q.type === 'ShortAnswer') {
-          isCorrect = q.correctAnswer.trim().toLowerCase() === answerObj.answer.trim().toLowerCase();
-        }
-        if (isCorrect) {
-          score += q.marks;
-        }
+          break;
+ 
+        case "Blank":
+        case "ShortAnswer":
+          if (typeof answerObj.answer === "string" && typeof q.correctAnswer === "string") {
+            isCorrect =
+              q.correctAnswer.trim().toLowerCase() ===
+              answerObj.answer.trim().toLowerCase();
+          }
+          break;
+ 
+        case "MAQ": // Multiple Answer Question
+          if (Array.isArray(answerObj.answer) && Array.isArray(q.correctAnswer)) {
+            const given = [...answerObj.answer].map(String).sort();
+            const correct = [...q.correctAnswer].map(String).sort();
+            isCorrect = JSON.stringify(given) === JSON.stringify(correct);
+          }
+          break;
+ 
+        default:
+          break;
+      }
+ 
+      if (isCorrect) {
+        // ✅ Always use marks from schema, fallback to 1
+        score += q.marks || 1;
       }
     }
-
+ 
     const passed = score >= assignment.cutoff;
-
+ 
     const attempt = new Attempt({
       assignment: id,
       employee: employeeId,
@@ -101,17 +127,23 @@ exports.submitAttempt = async (req, res) => {
       passed,
       attemptNumber
     });
-
+ 
     await attempt.save();
-
+ 
     res.status(200).json({
-      message: passed ? 'Assignment passed' : 'Assignment failed, please reattempt',
+      message: passed
+        ? "Assignment passed"
+        : "Assignment failed, please reattempt",
       score,
+      cutoff: assignment.cutoff,
+      totalMarks: assignment.totalMarks,
       passed,
       attemptNumber
     });
   } catch (error) {
-    res.status(500).json({ message: 'Error submitting attempt', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error submitting attempt", error: error.message });
   }
 };
 

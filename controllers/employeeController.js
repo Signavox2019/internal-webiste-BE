@@ -65,7 +65,6 @@ const updateProfile = async (req, res) => {
 // @desc    Update professional details (skills, experience, previous companies/projects, certifications, blood group)
 // @route   PUT /api/employees/update-professional/:id
 const updateEmployeeProfessionalDetails = asyncHandler(async (req, res) => {
-  const { id } = req.params;
   const {
     skills,
     experience,
@@ -76,7 +75,10 @@ const updateEmployeeProfessionalDetails = asyncHandler(async (req, res) => {
   } = req.body;
 
   try {
-    const employee = await Employee.findById(id);
+    // Get employee id from token
+    const employeeId = req.user._id;
+
+    const employee = await Employee.findById(employeeId);
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found' });
     }
@@ -99,7 +101,6 @@ const updateEmployeeProfessionalDetails = asyncHandler(async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
-
 
 // @desc    Get employee by ID
 // @route   GET /api/employees/:id

@@ -51,6 +51,6 @@ router.get('/:id', protect, adminOnly, getEmployeeById);
 router.delete('/:id', protect, adminOnly, deleteEmployee);
 
 // Protected route (use your auth middleware if required)
-router.put('/update-professional/:id', protect, updateEmployeeProfessionalDetails);
+router.put('/update-professional', protect, updateEmployeeProfessionalDetails);
 
 module.exports = router;

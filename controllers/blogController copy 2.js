@@ -4,7 +4,6 @@ const Blog = require("../models/Blogs");
 const mongoose = require("mongoose");
 
 // ✅ Create Blog
-// ✅ Create Blog
 exports.createBlog = asyncHandler(async (req, res) => {
   const {
     title,
@@ -33,7 +32,7 @@ exports.createBlog = asyncHandler(async (req, res) => {
     metaTitle,
     metaDescription,
     metaKeywords,
-    coverImage: req.file ? req.file.location : null,
+    coverImage: req.file ? req.file.location : null, // ✅ S3 file URL
     category,
     tags,
     contentBlocks,
@@ -81,7 +80,7 @@ exports.updateBlog = asyncHandler(async (req, res) => {
   const updates = req.body;
 
   if (req.file) {
-    updates.coverImage = req.file.location; 
+    updates.coverImage = req.file.location; // ✅ update with new S3 URL
   }
 
   const blog = await Blog.findByIdAndUpdate(id, updates, {
@@ -104,7 +103,7 @@ exports.deleteBlog = asyncHandler(async (req, res) => {
   res.json({ message: "Blog deleted successfully" });
 });
 
-// ✅ Toggle Publish
+// ✅ Publish / Unpublish Blog
 exports.togglePublish = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const blog = await Blog.findById(id);

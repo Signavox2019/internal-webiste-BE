@@ -5,47 +5,8 @@ const mongoose = require("mongoose");
 
 // ✅ Create Blog
 // ✅ Create Blog
-// exports.createBlog = asyncHandler(async (req, res) => {
-//   const {
-//     title,
-//     slug,
-//     metaTitle,
-//     metaDescription,
-//     metaKeywords,
-//     category,
-//     tags,
-//     contentBlocks,
-//   } = req.body;
-
-//   if (!title || !slug || !category) {
-//     return res.status(400).json({ message: "Title, slug, and category required" });
-//   }
-
-//   const blogExists = await Blog.findOne({ slug });
-//   if (blogExists) {
-//     return res.status(400).json({ message: "Slug already exists" });
-//   }
-
-//   const blog = await Blog.create({
-//     title,
-//     slug,
-//     author: req.user._id,
-//     metaTitle,
-//     metaDescription,
-//     metaKeywords,
-//     coverImage: req.file ? req.file.location : null,
-//     category,
-//     tags,
-//     contentBlocks,
-//   });
-
-//   res.status(201).json(blog);
-// });
-
-
-// ✅ Create Blog
 exports.createBlog = asyncHandler(async (req, res) => {
-  let {
+  const {
     title,
     slug,
     metaTitle,
@@ -58,15 +19,6 @@ exports.createBlog = asyncHandler(async (req, res) => {
 
   if (!title || !slug || !category) {
     return res.status(400).json({ message: "Title, slug, and category required" });
-  }
-
-  // Parse contentBlocks if it's a string
-  if (typeof contentBlocks === "string") {
-    try {
-      contentBlocks = JSON.parse(contentBlocks);
-    } catch (error) {
-      return res.status(400).json({ message: "Invalid contentBlocks format" });
-    }
   }
 
   const blogExists = await Blog.findOne({ slug });
@@ -88,34 +40,6 @@ exports.createBlog = asyncHandler(async (req, res) => {
   });
 
   res.status(201).json(blog);
-});
-
-// ✅ Update Blog
-exports.updateBlog = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  const updates = { ...req.body };
-
-  // Parse contentBlocks if it's a string
-  if (updates.contentBlocks && typeof updates.contentBlocks === "string") {
-    try {
-      updates.contentBlocks = JSON.parse(updates.contentBlocks);
-    } catch (error) {
-      return res.status(400).json({ message: "Invalid contentBlocks format" });
-    }
-  }
-
-  if (req.file) {
-    updates.coverImage = req.file.location; 
-  }
-
-  const blog = await Blog.findByIdAndUpdate(id, updates, {
-    new: true,
-    runValidators: true,
-  });
-
-  if (!blog) return res.status(404).json({ message: "Blog not found" });
-
-  res.json(blog);
 });
 
 // ✅ Get All Blogs
@@ -152,23 +76,23 @@ exports.getBlog = asyncHandler(async (req, res) => {
 });
 
 // ✅ Update Blog
-// exports.updateBlog = asyncHandler(async (req, res) => {
-//   const { id } = req.params;
-//   const updates = req.body;
+exports.updateBlog = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const updates = req.body;
 
-//   if (req.file) {
-//     updates.coverImage = req.file.location; 
-//   }
+  if (req.file) {
+    updates.coverImage = req.file.location; 
+  }
 
-//   const blog = await Blog.findByIdAndUpdate(id, updates, {
-//     new: true,
-//     runValidators: true,
-//   });
+  const blog = await Blog.findByIdAndUpdate(id, updates, {
+    new: true,
+    runValidators: true,
+  });
 
-//   if (!blog) return res.status(404).json({ message: "Blog not found" });
+  if (!blog) return res.status(404).json({ message: "Blog not found" });
 
-//   res.json(blog);
-// });
+  res.json(blog);
+});
 
 // ✅ Delete Blog
 exports.deleteBlog = asyncHandler(async (req, res) => {
